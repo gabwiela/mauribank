@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+
+ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
 
 Future<Map> getData() async {
   var url =
-      Uri.parse('https://api.hgbrasil.com/finance?format=json&key=611517b7');
+      Uri.parse('https://api.hgbrasil.com/finance?format=json-cors&key=860ca92e');
 
   http.Response response = await http.get(url);
   print('Response status: ${response.statusCode}');
