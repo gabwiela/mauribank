@@ -1,144 +1,280 @@
-
- import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MeuAppBanco());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MeuAppBanco extends StatelessWidget {
+  const MeuAppBanco({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Conversor de Moedas',
+      title: 'MauriBank',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        hintColor: Colors.green,
-        primaryColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+        ),
       ),
-      home: const MyHomePage(title: 'Conversor de Moedas'),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => TelaLogin(),
+        '/telaCadastro': (context) => TelaCadastro(),
+        '/novaTela': (context) => NovaTela(mensagem: 'Bem-vindo!'), //PARTE QUE SERÁ MODIFICADA 
+      },
     );
   }
 }
 
-Future<Map> getData() async {
-  var url =
-      Uri.parse('https://api.hgbrasil.com/finance?format=json-cors&key=860ca92e');
-
-  http.Response response = await http.get(url);
-  print('Response status: ${response.statusCode}');
-  print('Response body: ${response.body}');
-  return json.decode(response.body);
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
+class TelaLogin extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _TelaLoginState createState() => _TelaLoginState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final realController = TextEditingController();
-  final dolarController = TextEditingController();
-  final euroController = TextEditingController();
-  double dolar = 0.0;
-  double euro = 0.0;
+class _TelaLoginState extends State<TelaLogin> {
+  final TextEditingController _cpfController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+  bool _cpfError = false;
+  bool _senhaError = false;
 
-  void _realChanged(String text) {
-    double real = double.parse(text);
-    dolarController.text = (real / dolar).toStringAsFixed(2);
-    euroController.text = (real / euro).toStringAsFixed(2);
-  }
+  void _login() {
+    setState(() {
+      _cpfError = _cpfController.text.isEmpty;
+      _senhaError = _senhaController.text.isEmpty;
+    });
 
-  void _dolarChanged(String text) {
-    double dolar = double.parse(text);
-    realController.text = (dolar * this.dolar).toStringAsFixed(2);
-    euroController.text = (dolar * this.dolar / euro).toStringAsFixed(2);
-  }
-
-  void _euroChanged(String text) {
-    double euro = double.parse(text);
-    realController.text = (euro * this.euro).toStringAsFixed(2);
-    dolarController.text = (euro * this.euro / dolar).toStringAsFixed(2);
+    if (!_cpfError && !_senhaError) {
+      Navigator.pushNamed(context, '/novaTela');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Center(child: Text(widget.title)),
-      ),
-      body: FutureBuilder<Map>(
-        future: getData(),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-              return const Center(
-                child: Text(
-                  "Aguarde...",
-                  style: TextStyle(color: Colors.green, fontSize: 30.0),
-                  textAlign: TextAlign.center,
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/logobranca.jpg',
+              width: 200,
+              height: 200,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Conecte-se e mantenha suas finanças em dia.\nFaça seu login agora.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: 300,
+              child: TextField(
+                controller: _cpfController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  hintText: 'CPF',
+                  errorText: _cpfError ? 'Por favor, insira o CPF' : null,
+                  border: const OutlineInputBorder(),
                 ),
-              );
-            default:
-              if (snapshot.hasError) {
-                String? erro = snapshot.error.toString();
-                return Center(
-                  child: Text(
-                    "Houve uma falha ao buscar os dados: $erro",
-                    style: const TextStyle(color: Colors.green, fontSize: 25.0),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              } else {
-                dolar = snapshot.data!["results"]["currencies"]["USD"]["buy"];
-                euro = snapshot.data!["results"]["currencies"]["EUR"]["buy"];
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      const Icon(Icons.attach_money,
-                          size: 180.0, color: Colors.green),
-                      campoTexto("Reais", "R\$ ", realController, _realChanged),
-                      const Divider(),
-                      campoTexto("Dólares", "US\$", dolarController,
-                          _dolarChanged),
-                      const Divider(),
-                      campoTexto("Euros", "€", euroController, _euroChanged),
-                    ],
-                  ),
-                );
-              }
-          }
-        },
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: 300,
+              child: TextField(
+                controller: _senhaController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  hintText: 'Senha',
+                  errorText: _senhaError ? 'Por favor, insira a senha' : null,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: 300,
+              child: ElevatedButton(
+                onPressed: _login,
+                child: const Text('Entrar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/telaCadastro');
+              },
+              child: const Text(
+                'Criar conta',
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-Widget campoTexto(String label, String prefix,
-    TextEditingController controller, Function(String) f) {
-  return TextField(
-    controller: controller,
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.green),
-      prefixText: prefix,
-      border: const OutlineInputBorder(),
-    ),
-    style: const TextStyle(color: Colors.green, fontSize: 25.0),
-    onChanged: (value) => {f!(value)},
-    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-  );
+//PARTE QUE SERA MODIFICADA
+
+class NovaTela extends StatelessWidget {
+  final String mensagem;
+
+  const NovaTela({required this.mensagem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Nova Tela'),
+      ),
+      body: Center(
+        child: Text(mensagem),
+      ),
+    );
+  }
+}
+
+//PARTE QUE SERÁ MODIFICADA
+
+
+class TelaCadastro extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Criar conta'),
+        backgroundColor: Colors.blue,
+      ),
+      body: Center(
+        child: Container(
+          width: 300,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Vamos criar sua conta',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: 300,
+                child: TextField(
+                  style: const TextStyle(color: Colors.black),
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    hintText: 'Nome Completo',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 300,
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    hintText: 'CPF',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 300,
+                child: TextField(
+                  keyboardType: TextInputType.datetime,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    hintText: 'Data de nascimento',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 300,
+                child: TextField(
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    hintText: 'E-mail',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 300,
+                child: TextField(
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    hintText: 'Número de telefone',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 300,
+                child: TextField(
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    hintText: 'Senha',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 300,
+                child: TextField(
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    hintText: 'Confirme sua senha',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  final snackBar = SnackBar(
+                    content: const Text('Seus dados foram cadastrados com sucesso'),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                },
+                child: const Text('Crie sua conta'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
